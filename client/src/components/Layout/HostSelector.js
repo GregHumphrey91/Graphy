@@ -4,7 +4,7 @@ import { Menu } from "semantic-ui-react";
 
 // Host selector component
 const HostSelector = () => {
-  const [state, setState] = useState({ activeItem: "bio" });
+  const [state, setState] = useState({ activeItem: "logic-dev-01" });
 
   const handleItemClick = (e, { name }) => setState({ activeItem: name });
 
@@ -12,15 +12,15 @@ const HostSelector = () => {
 
   return (
     <Fragment>
-      <Menu tabular>
+      <Menu size="massive" tabular>
         <Menu.Item
-          name="bio"
-          active={activeItem === "bio"}
+          name="logic-dev-01"
+          active={activeItem === "logic-dev-01"}
           onClick={handleItemClick}
         />
         <Menu.Item
-          name="photos"
-          active={activeItem === "photos"}
+          name="logic-dev-02"
+          active={activeItem === "logic-dev-02"}
           onClick={handleItemClick}
         />
       </Menu>
