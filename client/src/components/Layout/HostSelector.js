@@ -3,12 +3,11 @@ import React, { Fragment, useState, useEffect } from "react";
 import { Menu } from "semantic-ui-react";
 
 // Host selector component
-const HostSelector = () => {
-  const [state, setState] = useState({ activeItem: "logic-dev-01" });
-
+const HostSelector = props => {
+  const { setState } = props;
   const handleItemClick = (e, { name }) => setState({ activeItem: name });
 
-  const { activeItem } = state;
+  const { activeItem } = props.state;
 
   return (
     <Fragment>
