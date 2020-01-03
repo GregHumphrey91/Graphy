@@ -1,5 +1,5 @@
 // Packages
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { BrowserRouter, Route } from "react-router-dom";
 
 // Components
@@ -12,7 +12,6 @@ import "./App.css";
 
 // App.js
 const App = props => {
-
   // State for graph display
   const [state, setState] = useState({ activeItem: "logic-dev-01" });
 
@@ -20,6 +19,7 @@ const App = props => {
     <BrowserRouter>
       <div className="App">
         <HostSelector {...props} state={state} setState={setState} />
+
         <Route path="/" render={props => <Home {...props} state={state} />} />
       </div>
     </BrowserRouter>

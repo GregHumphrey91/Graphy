@@ -24,9 +24,9 @@ export const Home = props => {
         res = await res.json();
         console.log(res);
         setState({
-          memory: "",
-          network: "",
-          cpu: ""
+          memory: res.memory,
+          network: res.network,
+          cpu: res.cpu
         });
         setLoading(false);
       } catch (err) {

@@ -19,7 +19,7 @@ const GraphController = {
       // Array of endpoints
       const allEndPoints = [idleUrl, userUrl, systemUrl, iowaitUrl, stealUrl];
 
-      // TODO: add an object of fields for each url ex: { iowait: response.data, steal: response.data, ..etc }.
+      // TODO: add an object of fields for each url ex: { iowait: response.data, steal: response.data,  }
 
       // Fetch data recursively
       const cpuGraphs = await Promise.all(
