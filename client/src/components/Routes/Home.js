@@ -19,10 +19,9 @@ export const Home = props => {
   useEffect(() => {
     const getGraphs = async () => {
       try {
-        console.log(activeItem);
         let res = await fetch(`api/graph/${activeItem}`);
         res = await res.json();
-        console.log(res);
+
         setState({
           memory: res.memory,
           network: res.network,
