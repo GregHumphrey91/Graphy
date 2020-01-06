@@ -1,16 +1,12 @@
+// Packages
 import React, { useState, useEffect } from "react";
 import * as am4core from "@amcharts/amcharts4/core";
 import * as am4charts from "@amcharts/amcharts4/charts";
 
+// Cpu component
 export const Cpu = props => {
+  // De-structure props
   const { cpu } = props;
-  const [state, setState] = useState({
-    idle: "",
-    user: "",
-    system: "",
-    iowait: "",
-    steal: ""
-  });
 
   useEffect(() => {
     /**
@@ -19,139 +15,149 @@ export const Cpu = props => {
      * @returns null
      */
     const initChart = async chart => {
-      const cpuData = await sortCpuData(chart);
-      await createChart(cpuData, chart);
+      const chartData = await formatData();
+      await createChart(chart, chartData);
     };
+
+    // Function calls
     var chart = am4core.create("cpu-chart", am4charts.XYChart);
     initChart(chart);
 
-    // Unmount
+    // Un mount
     return () => {};
   }, []);
 
   /**
-   * @name sortCpuData
-   * @desc Takes cpu state and filters it into separate arrays for metric conversion.
-   * @param {null}
-   * @returns {object} Sets graph state for each individual metric point.
+   * @name CreateChart
+   * @desc Creates chart with cpu data values.
+   * @param {object, object} - The chart object and the formated chart data.
+   * @returns {null}
    */
-  const sortCpuData = chart => {
-    /**@desc Filters the cpu props array and assigns them to state. */
-
-    let arr = []; // Empty arr
-
-    // Nested for loop
-    for (let i = 0; i < cpu.length; i++) {
-      for (let i2 = 0; i2 < cpu[i][0].datapoints.length; i2++) {
-        // Assign variables
-        var date = new Date(cpu[i][0].datapoints[i2][1] * 1000); // Date variable
-        var value = cpu[i][0].datapoints[i2][0]; // Data-points variable
-        var name = cpu[i][0].target; // The endpoint name variable
-
-        // Recursively push variables to array
-        arr.push({ date, value, name });
-      }
-    }
-    // ============================================================
-    // Chart configurations
-    console.log(arr);
-    chart.data = arr;
+  const createChart = (chart, chartData) => {
+    chart.data = chartData;
+    // Create axes
     var dateAxis = chart.xAxes.push(new am4charts.DateAxis());
     dateAxis.renderer.grid.template.location = 0;
-    dateAxis.minZoomCount = 5;
-    dateAxis.groupData = true;
-    dateAxis.groupCount = 500;
+    chart.dateFormatter.dateFormat = "[bold green]MMMM-D-YYYY";
     var valueAxis = chart.yAxes.push(new am4charts.ValueAxis());
-    valueAxis.baseValue = 95;
-    valueAxis.title.text = "CPU Idle Percent";
+    valueAxis.title.text = "CPU Use";
 
-    var series = chart.series.push(new am4charts.LineSeries());
-    series.name = "logic-dev-01";
-    series.data = arr;
-    series.dataFields.valueY = "value";
-    series.dataFields.dateX = "date";
+    /**
+     * @name  CreateSeries
+     * @param {String} field - The value field from the charts.data array
+     * @param {String} name - The series name.
+     * @param {Boolean} hidden - Toggles which chart to show/hide.
+     * @param {String} date - The date associated with the value.
+     * @returns {Object} - The series object.
+     */
+    function createSeries(field, name, hidden, date) {
+      var series = chart.series.push(new am4charts.LineSeries());
+      series.dataFields.valueY = field;
+      series.dataFields.dateX = date;
+      series.name = name;
+      series.tooltipText = "[bold black]{valueY}% [/]Date: {dateX} ";
+      series.strokeWidth = 2;
+      series.hidden = hidden !== false;
 
+      var bullet = series.bullets.push(new am4charts.Bullet());
+      bullet.tooltipText = "{valueY}%";
+
+      return series;
+    }
+
+    // Multiple Series for 5 metrics
+    createSeries("value", "Idle", false, "date");
+    createSeries("value2", "User", true, "date2");
+    createSeries("value3", "System", true, "date3");
+    createSeries("value4", "Iowait", true, "date4");
+    createSeries("value5", "Steal", true, "date5");
+
+    // Legend & Cursor
+    chart.legend = new am4charts.Legend();
     chart.cursor = new am4charts.XYCursor();
-    chart.cursor.xAxis = dateAxis;
 
-    var bullet = series.bullets.push(new am4charts.Bullet());
-    bullet.tooltipText = "{valueY}%";
-
-    // ==================================================================
-
-    // Filter and assign targets.
-    const idle = arr.filter(
-      val =>
-        val.name ===
-        "icinga2.logic-dev-01.services.Linux_CPU.check_nrpe.perfdata.idle.value"
-    );
-
-    const user = arr.filter(
-      val =>
-        val.name ===
-        "icinga2.logic-dev-01.services.Linux_CPU.check_nrpe.perfdata.user.value"
-    );
-    const system = arr.filter(
-      val =>
-        val.name ===
-        "icinga2.logic-dev-01.services.Linux_CPU.check_nrpe.perfdata.system.value"
-    );
-    const iowait = arr.filter(
-      val =>
-        val.name ===
-        "icinga2.logic-dev-01.services.Linux_CPU.check_nrpe.perfdata.iowait.value"
-    );
-    const steal = arr.filter(
-      val =>
-        val.name ===
-        "icinga2.logic-dev-01.services.Linux_CPU.check_nrpe.perfdata.steal.value"
-    );
-    // Assign target arrays to object.
-    const cpuState = [idle, user, system, iowait, steal];
-
-    return cpuState;
+    // Event handler for Legend select
+    chart.legend.itemContainers.template.events.on("hit", function(ev) {
+      var series = ev.target.dataItem.dataContext;
+      setTimeout(function() {
+        chart.series.each(function(item) {
+          if (item != series) {
+            item.hide();
+          } else {
+            item.show();
+          }
+        });
+      }, 10);
+    });
   };
 
   /**
-   * @name CreateChart
-   * @desc Creates chart with cpu data values.
-   * @param {object} - An object contained the state values.
-   * @returns {object} - The newly created chart.
-   */
-  const createChart = async (values, chart) => {
-  
+   * @name FormatData
+   * @desc Filters the cpu props array and re-assigns to new array for am4charts.
+   * @param null
+   * @returns {object} - New array containing each metric field in chronological order.
+   *
+   * */
+  const formatData = async () => {
+    let arr = []; // Empty arr
 
-    // var graph_datapoints1 = [];
-    // var graph_datapoints2 = [];
+    // Use for loop to push each field into an array.
+    let targetLen = cpu && cpu[0][0].datapoints.length;
+    for (let i = 0; i < targetLen; i++) {
+      // Idle field
+      var idleName = cpu && cpu[0][0].target;
+      var date = cpu && new Date(cpu[0][0].datapoints[i][1] * 1000);
+      var value = cpu && cpu[0][0].datapoints[i][0];
 
-    // for (var i = 0, len = graph_datapoints.length; i < len; i++) {
-    //   if (graph_datapoints[i]["name"] === "logic-dev-01") {
-    //     graph_datapoints1.push({
-    //       date: graph_datapoints[i]["date"]
-    //     });
-    //   }
-    // }
- 
+      // User field
+      var userName = cpu && cpu[1][0].target;
+      var date2 = cpu && new Date(cpu[1][0].datapoints[i][1] * 1000); // Date
+      var value2 = cpu && cpu[1][0].datapoints[i][0];
+
+      // System field
+      var systemName = cpu && cpu[2][0].target;
+      var date3 = cpu && new Date(cpu[2][0].datapoints[i][1] * 1000);
+      var value3 = cpu && cpu[2][0].datapoints[i][0];
+
+      // Iowait field
+      var iowaitName = cpu && cpu[3][0].target;
+      var date4 = cpu && new Date(cpu[3][0].datapoints[i][1] * 1000);
+      var value4 = cpu && cpu[3][0].datapoints[i][0];
+
+      // Steal field
+      var stealName = cpu && cpu[4][0].target;
+      var date5 = cpu && new Date(cpu[4][0].datapoints[i][1] * 1000);
+      var value5 = cpu && cpu[4][0].datapoints[i][0];
+
+      // Recursively push fields to array
+      arr.push({
+        idleName,
+        date,
+        value,
+        userName,
+        date2,
+        value2,
+        systemName,
+        date3,
+        value3,
+        iowaitName,
+        date4,
+        value4,
+        stealName,
+        date5,
+        value5
+      });
+    }
+
+    return arr;
   };
 
   return (
     <div className="cpu-component">
+      <h1>Linux CPU</h1>
       <div className="cpu-chart"></div>
     </div>
   );
 };
-
-// for (var i = 0, i_len = cpu.length; i < i_len; i++) {
-//   for (var i2 = 0, len = cpu[i][0]["datapoi2nts"].length; i2 < len; i2++) {
-//     var date = new Date(cpu[i]["datapoi2nts"][i2][1] * 1000);
-//     var value = cpu[i]["datapoi2nts"][i2][0];
-//     var name = cpu[i]["target"];
-//     // graph_datapoi2nts.push({
-//     //   date: date,
-//     //   value: value,
-//     //   name: name
-//     // });
-//   }
-// }
 
 export default Cpu;

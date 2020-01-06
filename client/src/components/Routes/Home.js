@@ -9,14 +9,22 @@ import CPU from "../Graphs/Cpu";
 import Memory from "../Graphs/Memory";
 import Network from "../Graphs/Network";
 
+// Home component
 export const Home = props => {
+  // State
   const [state, setState] = useState({ memory: "", network: "", cpu: "" });
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  // Props
   const { activeItem } = props.state;
 
   useEffect(() => {
+    /**
+     *@name GetGraphs 
+       @desc Sends request to express server for api data.
+       @returns {object} - Contains network, cpu, memory data
+     */
     const getGraphs = async () => {
       try {
         let res = await fetch(`api/graph/${activeItem}`);
@@ -37,15 +45,6 @@ export const Home = props => {
     getGraphs();
   }, [activeItem]);
 
-  const getUserData = async activeItem => {
-    try {
-      setLoading(false);
-    } catch (err) {
-      setError(err);
-      setLoading(false);
-    }
-  };
-
   if (loading) {
     return <Spinner />;
   } else if (error) {
@@ -56,18 +55,22 @@ export const Home = props => {
       <h1>{activeItem === "logic-dev-01" ? "First User" : "Second User"} </h1>
       <Grid className="graph-container">
         <Grid.Row>
-          <Grid.Column className="cpu" width={8}>
+          <Grid.Column className="cpu" width={8} stretched="true">
             <CPU cpu={state.cpu} />
           </Grid.Column>
-          <Grid.Column className="network" width={8}>
-            <Network network={state.network} />
+          <Grid.Column
+            className="memory"
+            width={6}
+            style={{ margin: "100px " }}
+          >
+            {" "}
+            <Memory memory={state.memory} />
           </Grid.Column>
         </Grid.Row>
 
         <Grid.Row>
-          <Grid.Column className="memory" width={8}>
-            {" "}
-            <Memory memory={state.memory} />
+          <Grid.Column className="network" width={8}>
+            <Network network={state.network} />
           </Grid.Column>
         </Grid.Row>
       </Grid>

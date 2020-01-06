@@ -23,8 +23,6 @@ router.get(
     const cpu = await getCpuData(user);
     const network = await getNetworkData(user);
     const memory = await getMemoryData(user);
-
-    console.log(user);
     res.status(200).json({ cpu: cpu, network: network, memory: memory });
   })
 );
